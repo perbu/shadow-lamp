@@ -24,13 +24,13 @@ static void js_token_cb(void *callback_data,
 
 
     if (token->type == JSON_TYPE_NUMBER) // disregard anything that isn't a number. Change this!
-    {
-        LOG(LL_INFO, ("Path: %s", path));
+    
+        LOG(LL_INFO, ("Path: '%s'", path));
         int newstate = 666;
         // If you need more complex parsing you might wanna sscanf here and figure out where you are.
         // From ukukhanya: int ret = sscanf(path, ".leds.%i.%c", &pixelid, &color);
 
-        if ( strcmp(path, ".lamp"))
+        if ( strcmp(path, ".lamp")==0)
         {
             newstate = atoi(token->ptr);
             LOG(LL_INFO, ("Setting lamp state to %d", newstate));
