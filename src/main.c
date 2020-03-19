@@ -22,15 +22,14 @@ static void js_token_cb(void *callback_data,
 {
     int event_type = *(int *)callback_data;
 
-
     if (token->type == JSON_TYPE_NUMBER) // disregard anything that isn't a number. Change this!
-    
+    {
         LOG(LL_INFO, ("Path: '%s'", path));
         int newstate = 666;
         // If you need more complex parsing you might wanna sscanf here and figure out where you are.
         // From ukukhanya: int ret = sscanf(path, ".leds.%i.%c", &pixelid, &color);
 
-        if ( strcmp(path, ".lamp")==0)
+        if (strcmp(path, ".lamp") == 0)
         {
             newstate = atoi(token->ptr);
             LOG(LL_INFO, ("Setting lamp state to %d", newstate));
@@ -47,7 +46,7 @@ static void delta_cb(int ev, void *ev_data, void *userdata)
     char log_bfr[255];
 
     // Make a proper c string out of the pointer so we can log it.
-    strncpy(log_bfr, delta->p, (int)delta->len > 255 ? 255 : (int)delta->len );
+    strncpy(log_bfr, delta->p, (int)delta->len > 255 ? 255 : (int)delta->len);
 
     LOG(LL_INFO, ("Delta callback: len: %d delta: '%s'", (int)delta->len, log_bfr));
     int ret = json_walk(delta->p, (int)delta->len, js_token_cb, &event_type);
@@ -66,6 +65,10 @@ static void setup_shadow()
 enum mgos_app_init_result mgos_app_init(void)
 {
     setup_shadow();
-    LOG(LL_INFO, ("Init done"));
+    LOG(LL_INFO, ("Lamp on GPIO pin %d",
+                  mgos_sys_config_get_pins_lampled()));
+    mgos_gpio_set_mode(mgos_sys_config_get_pins_lampled(),
+                       MGOS_GPIO_MODE_OUTPUT);
+
     return MGOS_APP_INIT_SUCCESS;
 }
