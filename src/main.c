@@ -21,19 +21,20 @@ static void js_token_cb(void *callback_data,
                         const char *path, const struct json_token *token)
 {
     int event_type = *(int *)callback_data;
-    if (token->type == JSON_TYPE_NUMBER) // disregard anything that isn't a number.
+
+
+    if (token->type == JSON_TYPE_NUMBER) // disregard anything that isn't a number. Change this!
     {
-        int newstate = 0;
-        // this might accept some whitespace here and there. Thanks Unix.
-        int ret = sscanf(path, ".lamp.%n", &newstate);
-        if (ret == 1 && (newstate == 0 || newstate == 1))
+        LOG(LL_INFO, ("Path: %s", path));
+        int newstate = 666;
+        // If you need more complex parsing you might wanna sscanf here and figure out where you are.
+        // From ukukhanya: int ret = sscanf(path, ".leds.%i.%c", &pixelid, &color);
+
+        if ( strcmp(path, ".lamp"))
         {
-            set_lamp_state(newstate);
+            newstate = atoi(token->ptr);
             LOG(LL_INFO, ("Setting lamp state to %d", newstate));
-        }
-        else
-        {
-            LOG(LL_ERROR, ("Invalid state given %d", newstate));
+            set_lamp_state(newstate);
         }
     }
     (void)event_type;
@@ -43,7 +44,12 @@ static void delta_cb(int ev, void *ev_data, void *userdata)
 {
     int event_type = 0;
     struct mg_str *delta = (struct mg_str *)ev_data;
-    LOG(LL_INFO, ("Delta callback: len: %d delta: '%s'", (int)delta->len, delta->p));
+    char log_bfr[255];
+
+    // Make a proper c string out of the pointer so we can log it.
+    strncpy(log_bfr, delta->p, (int)delta->len > 255 ? 255 : (int)delta->len );
+
+    LOG(LL_INFO, ("Delta callback: len: %d delta: '%s'", (int)delta->len, log_bfr));
     int ret = json_walk(delta->p, (int)delta->len, js_token_cb, &event_type);
     LOG(LL_INFO, ("Scanned shadow delta and found %d entries", ret));
 
