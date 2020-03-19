@@ -8,32 +8,35 @@
 // JSON parser.
 #include <frozen.h>
 
-
 int state = 0;
 
-static void set_lamp_state(int newstate) {
+static void set_lamp_state(int newstate)
+{
     // Set GPIO pin.
+    mgos_gpio_write(mgos_sys_config_get_pins_lampled(), newstate);
 }
 
 static void js_token_cb(void *callback_data,
                         const char *name, size_t name_len,
                         const char *path, const struct json_token *token)
 {
-    int event_type = *(int*) callback_data;
+    int event_type = *(int *)callback_data;
     if (token->type == JSON_TYPE_NUMBER) // disregard anything that isn't a number.
     {
         int newstate = 0;
         // this might accept some whitespace here and there. Thanks Unix.
-        int ret = sscanf(path, ".lamp.%i", &newstate);
+        int ret = sscanf(path, ".lamp.%n", &newstate);
         if (ret == 1 && (newstate == 0 || newstate == 1))
         {
             set_lamp_state(newstate);
-            LOG(LL_INFO,("Setting lamp state to %d", newstate));
-
-        } else {
+            LOG(LL_INFO, ("Setting lamp state to %d", newstate));
+        }
+        else
+        {
             LOG(LL_ERROR, ("Invalid state given %d", newstate));
         }
     }
+    (void)event_type;
 }
 
 static void delta_cb(int ev, void *ev_data, void *userdata)
@@ -44,10 +47,10 @@ static void delta_cb(int ev, void *ev_data, void *userdata)
     int ret = json_walk(delta->p, (int)delta->len, js_token_cb, &event_type);
     LOG(LL_INFO, ("Scanned shadow delta and found %d entries", ret));
 
+    (void)event_type;
     (void)ev;
     (void)userdata;
 }
-
 
 static void setup_shadow()
 {
